@@ -1770,6 +1770,19 @@ function Get-Arch() {
   }
 }
 
+function Download-File($wc, $url, $out_path) {
+  try {
+    $wc.DownloadFile($url, $out_path)
+  } catch {
+    $err = $_.Exception
+    $details = $err.Message
+    if ($err.InnerException) {
+      $details = "$details`n$($err.InnerException.Message)"
+    }
+    throw "ERROR: failed to download $url to $out_path`n$details"
+  }
+}
+
 function Download($download_url, $platforms) {
   $arch = Get-TargetTriple $platforms
 
@@ -1799,7 +1812,7 @@ function Download($download_url, $platforms) {
   if ($auth_token) {
     $wc.Headers["Authorization"] = "Bearer $auth_token"
   }
-  $wc.downloadFile($url, $dir_path)
+  Download-File $wc $url $dir_path
 
   Write-Verbose "Unpacking to $tmp"
 
@@ -1844,7 +1857,7 @@ function Download($download_url, $platforms) {
     $updater_url = "$download_url/$updater_id"
     $out_name = "$tmp\akaikatana-repack-update.exe"
 
-    $wc.downloadFile($updater_url, $out_name)
+    Download-File $wc $updater_url $out_name
     $bin_paths += $out_name
   }
 
